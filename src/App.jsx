@@ -3,9 +3,6 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
-  const [boardArray, setBoardArray] = useState([]);
-  const [isStarted, setIsStarted] = useState(false);
-
   let columns = 30;
   let rows = 30;
   let array = [];
@@ -19,6 +16,8 @@ function App() {
       futureArray[i][j] = { isLive: false };
     }
   }
+  const [boardArray, setBoardArray] = useState(array);
+  const [isStarted, setIsStarted] = useState(false);
 
   const toggleCellHandler = (row, column) => {
     setBoardArray(
@@ -49,7 +48,6 @@ function App() {
   };
 
   const automateCells = () => {
-    console.log("sutomate");
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
         let currentCell = boardArray[i][j];
@@ -67,6 +65,7 @@ function App() {
         }
       }
     }
+    console.log(futureArray);
     setBoardArray([...futureArray]);
   };
   let timer;
@@ -76,20 +75,25 @@ function App() {
       (updatedArray[2][2].isLive = true),
       (updatedArray[2][3].isLive = true),
       setBoardArray(updatedArray);
-
     timer = setInterval(() => {
       automateCells();
-    }, 1500);
+    }, 5000);
   };
+  clearInterval(timer);
   const stopTheGame = () => {
     clearInterval(timer);
     setIsStarted(false);
   };
-  useEffect(() => {
-    setBoardArray(array);
-  }, []);
+  // useEffect(() => {
+  //   setBoardArray(array);
+  // }, []);
 
-  console.log(isStarted);
+  // useEffect(() => {
+  //   return () => {
+  //     clearInterval(timer);
+  //   };
+  // }, []);
+  console.log("rerenderd");
   return (
     <>
       {isStarted ? (
