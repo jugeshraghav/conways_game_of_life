@@ -4,14 +4,19 @@ import "./App.css";
 
 function App() {
   const [boardArray, setBoardArray] = useState([]);
-  const [live, setLive] = useState(true);
-  let columns = 5;
-  let rows = 5;
+  const [isStarted, setIsStarted] = useState(false);
+
+  let columns = 30;
+  let rows = 30;
   let array = [];
+  let futureArray = [];
   for (let i = 0; i < rows; i++) {
     array[i] = [];
+    futureArray[i] = [];
+
     for (let j = 0; j < columns; j++) {
       array[i][j] = { isLive: false };
+      futureArray[i][j] = { isLive: false };
     }
   }
 
@@ -25,52 +30,81 @@ function App() {
     );
   };
 
-  const countNeighbours = (array, i, j) => {};
+  const countNeighbours = (grid, x, y) => {
+    let count = 0;
+    const iStart = x === 0 ? x : x - 1;
+    const jStart = y === 0 ? y : y - 1;
+    const iTill = x === rows - 1 ? x + 1 : x + 2;
+    const jTill = y === columns - 1 ? y + 1 : y + 2;
+    for (let i = iStart; i < iTill; i++) {
+      for (let j = jStart; j < jTill; j++) {
+        if (i === x && j === y) {
+          count = count;
+        } else {
+          count = grid[i][j].isLive ? count + 1 : count;
+        }
+      }
+    }
+    return count;
+  };
 
   const automateCells = () => {
+    console.log("sutomate");
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
         let currentCell = boardArray[i][j];
 
         let noOfNeighboursAlive = countNeighbours(boardArray, i, j);
 
-        if (currentCell.isLive) {
-          if (noOfNeighboursAlive < 2 || noOfNeighboursAlive >= 4) {
-            const updatedArray = [...boardArray];
-            boardArray[i][j].isLive = false;
-            setBoardArray(updatedArray);
-          }
+        if (currentCell.isLive && noOfNeighboursAlive < 2) {
+          futureArray[i][j].isLive = false;
+        } else if (currentCell.isLive && noOfNeighboursAlive > 3) {
+          futureArray[i][j].isLive = false;
+        } else if (currentCell.isLive === false && noOfNeighboursAlive === 3) {
+          futureArray[i][j].isLive = true;
         } else {
-          if (noOfNeighboursAlive === 3) {
-            const updatedArray = [...boardArray];
-            boardArray[i][j].isLive = true;
-            setBoardArray(updatedArray);
-          }
+          futureArray[i][j] = boardArray[i][j];
         }
       }
     }
+    setBoardArray([...futureArray]);
   };
-
+  let timer;
   const startTheGame = () => {
     const updatedArray = [...boardArray];
-    // (updatedArray[3][4].isLive = true),
     (updatedArray[2][1].isLive = true),
       (updatedArray[2][2].isLive = true),
       (updatedArray[2][3].isLive = true),
-      console.log(updatedArray);
-    setBoardArray(updatedArray);
+      setBoardArray(updatedArray);
+
+    timer = setInterval(() => {
+      automateCells();
+    }, 1500);
   };
-
-  console.log(boardArray);
-
+  const stopTheGame = () => {
+    clearInterval(timer);
+    setIsStarted(false);
+  };
   useEffect(() => {
     setBoardArray(array);
   }, []);
 
+  console.log(isStarted);
   return (
     <>
-      <button onClick={startTheGame}>Start</button>
-      <button onClick={() => automateCells()}>automate</button>
+      {isStarted ? (
+        <button onClick={stopTheGame}>Stop</button>
+      ) : (
+        <button
+          onClick={() => {
+            setIsStarted(true);
+            startTheGame();
+          }}
+        >
+          Start
+        </button>
+      )}
+      <button onClick={() => automateCells()}>Next</button>
       <table>
         <tbody>
           {boardArray.length > 0 &&
