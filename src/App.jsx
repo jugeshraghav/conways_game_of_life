@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import "./App.css";
 
 let columns = 5;
 let rows = 5;
-export function make2DArray(rows, cols) {
+function make2DArray(rows, cols) {
   let array = new Array(rows);
   for (let i = 0; i < array.length; i++) {
     array[i] = new Array(cols).fill(0);
@@ -26,63 +26,53 @@ const countLiveNeighbours = (grid, x, y) => {
   }
   return count;
 };
+
 function App() {
-  const [grid, setGrid] = useState(make2DArray(rows, columns));
+  const [grid, setGrid] = useState(() => make2DArray(rows, columns));
   const [isStarted, setIsStarted] = useState(false);
-  const runningRef = useRef(isStarted);
-  runningRef.current = isStarted;
-  const timeoutRef = useRef(null); // Ref to hold timeout reference
+  const timerId = useRef(null);
+
+  function randomizeArray(rows, cols) {
+    let res = [];
+    for (let i = 0; i < rows; i++) {
+      res[i] = [];
+      for (let j = 0; j < cols; j++) {
+        res[i][j] = Math.round(Math.random());
+      }
+    }
+    setGrid([...res]);
+  }
 
   // Function to compute the next generation of the grid
   const computeFutureArray = () => {
-    console.log("future array");
-    const newGrid = make2DArray(rows, columns);
-
-    for (let i = 0; i < rows; i++) {
-      for (let j = 0; j < columns; j++) {
-        const neighbors = countLiveNeighbours(grid, i, j);
-        const currentCell = grid[i][j];
-
-        if (currentCell === 1) {
-          // Any live cell with fewer than two live neighbors dies
-          // Any live cell with two or three live neighbors lives on to the next generation
-          // Any live cell with more than three live neighbors dies
-          newGrid[i][j] = neighbors === 2 || neighbors === 3 ? 1 : 0;
-        } else {
-          // Any dead cell with exactly three live neighbors becomes a live cell
-          newGrid[i][j] = neighbors === 3 ? 1 : 0;
+    setGrid((prevGrid) => {
+      const newGrid = make2DArray(rows, columns);
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < columns; j++) {
+          const neighbors = countLiveNeighbours(prevGrid, i, j);
+          const currentCell = prevGrid[i][j];
+          if (currentCell === 1) {
+            // Any live cell with fewer than two live neighbors dies
+            // Any live cell with two or three live neighbors lives on to the next generation
+            // Any live cell with more than three live neighbors die
+            newGrid[i][j] = neighbors === 2 || neighbors === 3 ? 1 : 0;
+          } else {
+            // Any dead cell with exactly three live neighbors becomes a live cell
+            newGrid[i][j] = neighbors === 3 ? 1 : 0;
+          }
         }
       }
-    }
 
-    // Update grid state immutably
-    setGrid([...newGrid]);
-    console.log(newGrid);
+      return newGrid;
+    });
   };
 
   // Function to run the game simulation
-  const runningGameSimulation = useCallback(() => {
-    console.log("running");
-    if (!runningRef.current) {
-      return;
-    }
-    console.log(grid);
-    //future grid state  calculation
-    computeFutureArray();
-    setTimeout(() => {
-      runningGameSimulation();
-    }, 5000);
-  }, []);
-
-  useEffect(() => {
-    const initialGrid = make2DArray(rows, columns);
-    initialGrid[1][2] = 1;
-    initialGrid[2][3] = 1;
-    initialGrid[3][1] = 1;
-    initialGrid[3][2] = 1;
-    initialGrid[3][3] = 1;
-    setGrid(initialGrid);
-  }, []);
+  const runningGameSimulation = () => {
+    timerId.current = setInterval(() => {
+      computeFutureArray();
+    }, 1000);
+  };
 
   // Toggle cell state between alive (1) and dead (0)
   const toggleCellHandler = (rowIndex, colIndex) => {
@@ -97,17 +87,27 @@ function App() {
   // Render the app UI
   return (
     <>
-      <button
-        onClick={() => {
-          setIsStarted(!isStarted);
-          if (!isStarted) {
-            runningRef.current = true;
+      {isStarted ? (
+        <button
+          onClick={() => {
+            setIsStarted(false);
+            clearInterval(timerId.current);
+          }}
+        >
+          Stop
+        </button>
+      ) : (
+        <button
+          onClick={() => {
+            setIsStarted(true);
             runningGameSimulation();
-          }
-        }}
-      >
-        {isStarted ? "Stop" : "Start"}
-      </button>
+          }}
+        >
+          Start
+        </button>
+      )}
+
+      <button onClick={() => randomizeArray(rows, columns)}>Random </button>
       <button onClick={computeFutureArray}>Next</button>
       <table>
         <tbody>
