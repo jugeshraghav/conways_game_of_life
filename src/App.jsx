@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import "./App.css";
 
-let columns = 5;
-let rows = 5;
+let columns = 35;
+let rows = 15;
 function make2DArray(rows, cols) {
   let array = new Array(rows);
   for (let i = 0; i < array.length; i++) {
